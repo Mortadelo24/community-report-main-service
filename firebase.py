@@ -10,9 +10,15 @@ def initialize_firebase():
         print("Could not initialize firebase")
 
 
-def isAuthTokenValid(token: str):
+def get_firebase_uid(token: str):
     try:
-        print(auth.verify_id_token(token))
-        return True
-    except Exception:
-        return False
+        tokenInfo = auth.verify_id_token(token)
+    except Exception as e:
+        print(e)
+        return None
+
+    return tokenInfo["uid"]
+
+
+async def get_firebase_user(uid: str):
+    return auth.get_user(uid)

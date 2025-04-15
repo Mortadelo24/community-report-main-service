@@ -1,7 +1,13 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Depends, Header, HTTPException
 from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
-from firebase import isAuthTokenValid, initialize_firebase
+from firebase import get_firebase_user, initialize_firebase, get_firebase_uid
+from pydantic import BaseModel
+
+
+class User(BaseModel):
+    id: str
+    display_name: str | None = None
 
 
 initialize_firebase()
@@ -19,16 +25,31 @@ app.add_middleware(
         )
 
 
-@app.middleware("http")
-async def isTokenValid(request: Request, call_next):
-    if "Authorization" in request.headers:
-        print(isAuthTokenValid(request.headers["Authorization"]))
-    return await call_next(request)
+async def get_uid(Authorization: Annotated[str, Header()]):
+    uid = get_firebase_uid(Authorization)
+
+    if not uid:
+        raise HTTPException(status_code=400,
+                            detail="Authorization token invalid")
+    return uid
+
+
+async def get_current_user(uid: Annotated[str, Depends(get_uid)]):
+    userInfo = await get_firebase_user(uid)
+    return User(
+                id=userInfo.uid,
+                display_name=userInfo.display_name
+            )
 
 
 @app.get("/")
-def read_root():
-    return {"hello", "peru"}
+def read_root(uid: Annotated[str, Depends(get_uid)]):
+    return uid
+
+
+@app.get("/users/me")
+def read_user_me(user: Annotated[User, Depends(get_current_user)]):
+    return user
 
 
 @app.get("/items/{item_id}", )
