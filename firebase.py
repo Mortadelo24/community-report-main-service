@@ -21,4 +21,10 @@ def get_firebase_uid(token: str):
 
 
 async def get_firebase_user(uid: str):
-    return auth.get_user(uid)
+    try:
+        user = auth.get_user(uid)
+    except Exception as e:
+        print(e)
+        return None
+
+    return user
