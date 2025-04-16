@@ -10,17 +10,17 @@ def initialize_firebase():
         print("Could not initialize firebase")
 
 
-def get_firebase_uid(token: str):
+def get_firebase_user_from_token(token: str):
     try:
         tokenInfo = auth.verify_id_token(token)
     except Exception as e:
         print(e)
         return None
 
-    return tokenInfo["uid"]
+    return tokenInfo
 
 
-async def get_firebase_user(uid: str):
+def get_firebase_user(uid: str):
     try:
         user = auth.get_user(uid)
     except Exception as e:
@@ -28,3 +28,11 @@ async def get_firebase_user(uid: str):
         return None
 
     return user
+
+
+def get_firebase_uid(token: str):
+    tokenInfo = get_firebase_user_from_token(token)
+    if not tokenInfo:
+        return None
+
+    return tokenInfo["uid"]

@@ -1,76 +1,78 @@
-from fastapi import FastAPI, Depends, Header, HTTPException, Path
+from fastapi import FastAPI, HTTPException, Body, Depends
 from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
-from firebase import get_firebase_user, initialize_firebase, get_firebase_uid
-from pydantic import BaseModel
+from database import create_db_and_tables, DBSessionDependency
+from data_parsers import get_user_from_firebase
+from firebase import initialize_firebase, get_firebase_uid
+from models.user import User, UserOut
+from enum import Enum
+from sqlmodel import select
+from auth.tokens import encode_user_token, decode_user_token
 
-
-class User(BaseModel):
-    id: str
-    display_name: str | None = None
-    photo_url: str | None = None
-
-
-class Community(BaseModel):
-    id: str
-    name: str
-
-
-initialize_firebase()
 app = FastAPI()
 
-origins = [
-        "http://localhost:5173",
-        ]
+origins = ["http://localhost:5173"]
 app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["POST", "GET", "PUT", "DELETE"],
-        allow_headers=["*"]
-        )
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["POST", "GET", "PUT", "DELETE"],
+    allow_headers=["*"]
+)
 
 
-async def get_uid(Authorization: Annotated[str, Header()]):
-    uid = get_firebase_uid(Authorization)
-
-    if not uid:
-        raise HTTPException(status_code=400,
-                            detail="Authorization token invalid")
-    return uid
+class AuthProvider(str, Enum):
+    google = "google"
 
 
-async def get_current_user(uid: Annotated[str, Depends(get_uid)]):
-    userInfo = await get_firebase_user(uid)
-    return User(
-                id=userInfo.uid,
-                display_name=userInfo.display_name,
-                photo_url=userInfo.photo_url
-            )
+def get_authenticated_user(provider: Annotated[AuthProvider, Body(embed=True)], token: Annotated[str, Body(embed=True)],
+                           DBSession: DBSessionDependency):
+    if provider != "google":
+        raise HTTPException(status_code=400, detail="Only google is implemented")
 
+    firebase_id = get_firebase_uid(token)
 
-async def verify_user_id(user_id: Annotated[str, Path()]):
-    if not await get_firebase_user(user_id):
-        raise HTTPException(status_code=400, detail="Invalid user: " + user_id)
-    return user_id
+    if not firebase_id:
+        raise HTTPException(status_code=400, detail="Invalid firebase token")
 
+    try:
+        user = DBSession.exec(select(User).where(User.firebase_id == firebase_id)).first()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Bad credentials")
 
-@app.get("/")
-def read_root(uid: Annotated[str, Depends(get_uid)]):
-    return uid
-
-
-@app.get("/users/me")
-def read_user_me(user: Annotated[User, Depends(get_current_user)]):
     return user
 
 
-@app.get("/users/{user_id}/communities")
-def read_communities(user_id: Annotated[str, Depends(verify_user_id)],
-                     current_user_id: Annotated[str, Depends(get_uid)]):
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+    initialize_firebase()
 
-    fake_communities = [
-            {"id": "faffdfafad", "name": "prueba 2"}
-            ]
 
-    return fake_communities
+@app.post("/login")
+def login(user: Annotated[User, Depends(get_authenticated_user)]):
+    userOut = UserOut(**user.dict())
+    encoded_user_token = encode_user_token(userOut)
+    return encoded_user_token
+
+
+@app.post("/users")
+async def create_user(DBSession: DBSessionDependency,
+                      firebase_token: Annotated[str | None, Body(embed=True)] = None):
+    userIn = None
+    # TODO: change the way the token is handle and the providers like login
+    if firebase_token:
+        userIn = get_user_from_firebase(firebase_token)
+    else:
+        raise HTTPException(status_code=400, detail="The body should contain a method")
+
+    newUser = User(**userIn.dict())
+
+    try:
+        DBSession.add(newUser)
+        DBSession.commit()
+        DBSession.refresh(newUser)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Could not process NewUser")
+
+    return newUser
