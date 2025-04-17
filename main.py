@@ -96,7 +96,11 @@ async def create_user(provider: Annotated[AuthProvider, Body(embed=True)], token
     except Exception:
         raise HTTPException(status_code=400, detail="Could not process NewUser")
 
-    return UserOut(**newUser.dict())
+    userAuth = UserAuth(**newUser.dict())
+
+    return {
+        "accessToken": encode_user_token(userAuth)
+    }
 
 
 @app.get("/users/{uid}/communities", response_model=list[CommunityOut])

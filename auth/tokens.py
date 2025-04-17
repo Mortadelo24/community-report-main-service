@@ -1,12 +1,12 @@
 from joserfc import jwt
 from joserfc.jwk import OctKey
-from models.user import UserOut
+from models.user import UserAuth
 
 # TODO: change the key for the one in the .env file
 key = OctKey.import_key("super_fake_key")
 
 
-def encode_user_token(user: UserOut):
+def encode_user_token(user: UserAuth):
     encoded_jwt = jwt.encode({"alg": "HS256"}, user.dict(), key)
 
     return encoded_jwt
