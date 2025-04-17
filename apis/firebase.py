@@ -13,8 +13,7 @@ def initialize_firebase():
 def get_firebase_user_from_token(token: str):
     try:
         tokenInfo = auth.verify_id_token(token)
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
     return tokenInfo
@@ -23,8 +22,7 @@ def get_firebase_user_from_token(token: str):
 def get_firebase_user(uid: str):
     try:
         user = auth.get_user(uid)
-    except Exception as e:
-        print(e)
+    except Exception:
         return None
 
     return user

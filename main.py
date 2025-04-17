@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException, Body, Depends
+from fastapi import FastAPI, HTTPException, Body, Depends, Header, Path
 from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
 from database import create_db_and_tables, DBSessionDependency
 from data_parsers import get_user_from_firebase
-from firebase import initialize_firebase, get_firebase_uid
-from models.user import User, UserOut
+from apis.firebase import initialize_firebase, get_firebase_uid
+
+from models.user import User, UserOut, UserAuth
+from models.community import CommunityOut
+
 from enum import Enum
 from sqlmodel import select
 from auth.tokens import encode_user_token, decode_user_token
@@ -35,12 +38,20 @@ def get_authenticated_user(provider: Annotated[AuthProvider, Body(embed=True)], 
     if not firebase_id:
         raise HTTPException(status_code=400, detail="Invalid firebase token")
 
-    try:
-        user = DBSession.exec(select(User).where(User.firebase_id == firebase_id)).first()
-    except Exception:
+    user = DBSession.exec(select(User).where(User.firebase_id == firebase_id)).first()
+    if not user:
         raise HTTPException(status_code=400, detail="Bad credentials")
 
     return user
+
+
+def get_user(Authorization: Annotated[str, Header()]):
+    try:
+        deconded_user = decode_user_token(Authorization)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid Auth Token")
+
+    return UserAuth(**deconded_user)
 
 
 @app.on_event("startup")
@@ -49,22 +60,32 @@ def on_startup():
     initialize_firebase()
 
 
+@app.get("/")
+def read_root(user: Annotated[UserAuth, Depends(get_user)]):
+    return user
+
+
 @app.post("/login")
 def login(user: Annotated[User, Depends(get_authenticated_user)]):
-    userOut = UserOut(**user.dict())
-    encoded_user_token = encode_user_token(userOut)
-    return encoded_user_token
+    userAuth = UserAuth(**user.dict())
+    encoded_user_token = encode_user_token(userAuth)
+    return {
+        "accessToken": encoded_user_token
+    }
+
+
+@app.get("/users/me")
+def read_current_user(user: Annotated[UserAuth, Depends(get_user)]):
+    return user
 
 
 @app.post("/users")
-async def create_user(DBSession: DBSessionDependency,
-                      firebase_token: Annotated[str | None, Body(embed=True)] = None):
-    userIn = None
-    # TODO: change the way the token is handle and the providers like login
-    if firebase_token:
-        userIn = get_user_from_firebase(firebase_token)
-    else:
-        raise HTTPException(status_code=400, detail="The body should contain a method")
+async def create_user(provider: Annotated[AuthProvider, Body(embed=True)], token: Annotated[str, Body(embed=True)], DBSession: DBSessionDependency):
+
+    try:
+        userIn = get_user_from_firebase(token)
+    except Exception:
+        HTTPException(status_code=400, detail="Invalid firebase token")
 
     newUser = User(**userIn.dict())
 
@@ -75,4 +96,11 @@ async def create_user(DBSession: DBSessionDependency,
     except Exception:
         raise HTTPException(status_code=400, detail="Could not process NewUser")
 
-    return newUser
+    return UserOut(**newUser.dict())
+
+
+@app.get("/users/{uid}/communities")
+async def read_user_communities(uid: Annotated[int, Path()]):
+    print(f"communities for {uid}")
+    fake_community = CommunityOut(id=2, name="Fake community")
+    return [fake_community]

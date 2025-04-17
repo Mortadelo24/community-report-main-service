@@ -15,8 +15,13 @@ class UserOut(UserBase):
     id: int
 
 
+class UserAuth(UserOut):
+    pass
+
+
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     display_name: str | None = Field(default=None)
     firebase_id: str | None = Field(default=None, index=True, unique=True)
     email: str = Field()
+    hashed_password: str | None = Field(default=None)
