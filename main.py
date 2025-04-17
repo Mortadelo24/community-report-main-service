@@ -61,8 +61,8 @@ def on_startup():
 
 
 @app.get("/")
-def read_root(user: Annotated[UserAuth, Depends(get_user)]):
-    return user
+def read_root():
+    return "A default root"
 
 
 @app.post("/login")
