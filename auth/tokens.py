@@ -2,6 +2,7 @@ from joserfc import jwt
 from joserfc.jwk import OctKey
 from models.user import UserOut
 
+# TODO: change the key for the one in the .env file
 key = OctKey.import_key("super_fake_key")
 
 

@@ -74,7 +74,7 @@ def login(user: Annotated[User, Depends(get_authenticated_user)]):
     }
 
 
-@app.get("/users/me")
+@app.get("/users/me", response_model=UserOut)
 def read_current_user(user: Annotated[UserAuth, Depends(get_user)]):
     return user
 
@@ -99,7 +99,7 @@ async def create_user(provider: Annotated[AuthProvider, Body(embed=True)], token
     return UserOut(**newUser.dict())
 
 
-@app.get("/users/{uid}/communities")
+@app.get("/users/{uid}/communities", response_model=list[CommunityOut])
 async def read_user_communities(uid: Annotated[int, Path()]):
     print(f"communities for {uid}")
     fake_community = CommunityOut(id=2, name="Fake community")
