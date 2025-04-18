@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Body, Depends, Header, Path
+from fastapi import FastAPI, HTTPException, Body, Depends, Path
 from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from database import create_db_and_tables, DBSessionDependency
 from data_parsers import get_user_from_firebase
 from apis.firebase import initialize_firebase, get_firebase_uid
@@ -23,12 +24,14 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+security = HTTPBearer()
+
 
 class AuthProvider(str, Enum):
     google = "google"
 
 
-def get_authenticated_user(provider: Annotated[AuthProvider, Body(embed=True)], token: Annotated[str, Body(embed=True)],
+def get_user_from_provider(provider: Annotated[AuthProvider, Body(embed=True)], token: Annotated[str, Body(embed=True)],
                            DBSession: DBSessionDependency):
     if provider != "google":
         raise HTTPException(status_code=400, detail="Only google is implemented")
@@ -45,13 +48,19 @@ def get_authenticated_user(provider: Annotated[AuthProvider, Body(embed=True)], 
     return user
 
 
-def get_user(Authorization: Annotated[str, Header()]):
+def get_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
     try:
-        deconded_user = decode_user_token(Authorization)
+        deconded_user = decode_user_token(credentials.credentials)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid Auth Token")
 
     return UserAuth(**deconded_user)
+
+
+def auth_dependency(user: Annotated[UserAuth, Depends(get_user_from_provider)], DBSession: DBSessionDependency):
+    userInDB = DBSession.exec(select(User).where(User.id == user.id)).first()
+    if not userInDB:
+        raise HTTPException(status_code=400, detail="Bad credentials")
 
 
 @app.on_event("startup")
@@ -66,7 +75,7 @@ def read_root():
 
 
 @app.post("/login")
-def login(user: Annotated[User, Depends(get_authenticated_user)]):
+def login(user: Annotated[User, Depends(get_user_from_provider)]):
     userAuth = UserAuth(**user.dict())
     encoded_user_token = encode_user_token(userAuth)
     return {
@@ -81,7 +90,6 @@ def read_current_user(user: Annotated[UserAuth, Depends(get_user)]):
 
 @app.post("/users")
 async def create_user(provider: Annotated[AuthProvider, Body(embed=True)], token: Annotated[str, Body(embed=True)], DBSession: DBSessionDependency):
-
     try:
         userIn = get_user_from_firebase(token)
     except Exception:
