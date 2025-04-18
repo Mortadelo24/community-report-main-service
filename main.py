@@ -15,7 +15,7 @@ from auth.tokens import encode_user_token, decode_user_token
 
 app = FastAPI()
 
-origins = ["http://localhost:5173", "https://integrador-community.netlify.app/"]
+origins = ["http://localhost:5173", "https://integrador-community.netlify.app"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
