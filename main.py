@@ -93,7 +93,7 @@ async def create_user(provider: Annotated[AuthProvider, Body(embed=True)], token
     try:
         userIn = get_user_from_firebase(token)
     except Exception:
-        HTTPException(status_code=400, detail="Invalid firebase token")
+        raise HTTPException(status_code=400, detail="Invalid firebase token")
 
     newUser = User(**userIn.dict())
 
