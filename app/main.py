@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import create_db_and_tables
 from contextlib import asynccontextmanager
 from .routers import users
+from .apis import firebase
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables() 
+    firebase.initialize() 
     yield
 
 app = FastAPI(

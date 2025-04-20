@@ -20,7 +20,6 @@ router = APIRouter()
         response_description="The bearer token that authenticates the user in this api"
 )
 def create_token(token: TokenCreate, session: DBSessionDependency):
-    firebase.initialize()
     userFirebase = firebase.get_user(token.access_token)
     if not userFirebase:
         raise HTTPException(status_code=400, detail="Invalid access_token")  
