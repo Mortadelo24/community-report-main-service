@@ -35,3 +35,7 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return "cerru is real"
+
+@app.get("/health")
+def read_health():
+    return 
