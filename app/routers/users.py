@@ -5,7 +5,7 @@ from ..models.token import TokenCreate, TokenResponse
 from ..apis import firebase
 from ..database import DBSessionDependency
 from ..models.user import User, UserToken, UserResponse
-from ..models.community import CommunityResponse, Community
+from ..models.community import CommunityPublic, Community
 from ..security import encode_user_token
 from ..dependencies import user_token_dependency
 
@@ -66,7 +66,7 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
 
 @router.get(
         "/{user_id}/communities", 
-        response_model=list[CommunityResponse],
+        response_model=list[CommunityPublic],
         status_code=status.HTTP_200_OK,
         summary="Returns the communities of an user",
         description="Makes a request to the data base for the communities of a specific user_id",
@@ -76,7 +76,9 @@ def read_user_communities(user_id: Annotated[int, Path()] , userToken: user_toke
     if user_id != userToken.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can't read others communities")
 
-    statement = select(Community).limit(10)
-    communities = session.exec(statement).all() 
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") 
 
-    return communities
+
+    return user.communities

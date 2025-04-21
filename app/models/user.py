@@ -1,7 +1,12 @@
-from pydantic import BaseModel, EmailStr
-from sqlmodel import Field, SQLModel
+from pydantic import EmailStr
+from sqlmodel import Field, SQLModel, Relationship
+from .links import UserCommunityLink
+from typing import TYPE_CHECKING
 
-class UserBase(BaseModel):
+if TYPE_CHECKING:
+    from .community import Community
+
+class UserBase(SQLModel):
     display_name: str | None = None
     email: EmailStr
 
@@ -16,8 +21,7 @@ class UserResponse(UserBase):
 class UserToken(UserResponse):
     pass
 
-class User(SQLModel, table=True):
+class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    display_name: str | None = None
     firebase_id: str | None = Field(default=None, index=True, unique=True)
-    email: EmailStr
+    communities: list["Community"] = Relationship(back_populates="members", link_model=UserCommunityLink)
