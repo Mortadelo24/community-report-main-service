@@ -1,13 +1,13 @@
-from pydantic import BaseModel
-from sqlmodel import Field, SQLModel
+from sqlmodel import SQLModel, Field
 
-class CommunityBase(BaseModel):
+class CommunityBase(SQLModel):
     name: str
 
+class CommunityCreate(CommunityBase):
+    pass
 
 class CommunityResponse(CommunityBase):
     id: int
 
-class Community(SQLModel):
+class Community(CommunityBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field()

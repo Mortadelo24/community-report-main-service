@@ -5,7 +5,7 @@ from ..models.token import TokenCreate, TokenResponse
 from ..apis import firebase
 from ..database import DBSessionDependency
 from ..models.user import User, UserToken, UserResponse
-from ..models.community import CommunityResponse
+from ..models.community import CommunityResponse, Community
 from ..security import encode_user_token
 from ..dependencies import user_token_dependency
 
@@ -72,9 +72,11 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
         description="Makes a request to the data base for the communities of a specific user_id",
         response_description="The communities of the given user_id"
 )
-def read_user_communities(user_id: Annotated[int, Path()] , userToken: user_token_dependency):
+def read_user_communities(user_id: Annotated[int, Path()] , userToken: user_token_dependency, session: DBSessionDependency):
     if user_id != userToken.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can't read others communities")
-    
-    fake_community = CommunityResponse(name="this is fake", id= 2 )
-    return [fake_community]
+
+    statement = select(Community).limit(10)
+    communities = session.exec(statement).all() 
+
+    return communities
