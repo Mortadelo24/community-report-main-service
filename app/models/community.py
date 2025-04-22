@@ -1,10 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import TYPE_CHECKING
 from .links import UserCommunityLink
-
-
-if TYPE_CHECKING:
-    from .user import User
+from .user import User
 
 class CommunityBase(SQLModel):
     name: str
@@ -17,4 +13,7 @@ class CommunityPublic(CommunityBase):
 
 class Community(CommunityBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    members: list["User"] = Relationship(back_populates="communities", link_model=UserCommunityLink)
+    members: list["User"] = Relationship(back_populates="communities_joined", link_model=UserCommunityLink)
+    
+    owner_id: int  = Field(foreign_key="user.id")
+    owner: User| None = Relationship(back_populates="owned_communities")

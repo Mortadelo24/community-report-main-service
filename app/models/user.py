@@ -24,4 +24,5 @@ class UserToken(UserResponse):
 class User(UserBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     firebase_id: str | None = Field(default=None, index=True, unique=True)
-    communities: list["Community"] = Relationship(back_populates="members", link_model=UserCommunityLink)
+    communities_joined: list["Community"] = Relationship(back_populates="members", link_model=UserCommunityLink)
+    owned_communities: list["Community"] = Relationship(back_populates="owner")

@@ -18,13 +18,16 @@ router = APIRouter()
     response_description="The community that was created"
 )
 def create_community(communityCreate: CommunityCreate, userToken: user_token_dependency, session: DBSessionDependency):
-    newCommunity = Community.model_validate(communityCreate)
-
-    owner = session.get(User, userToken.id)
-
-    if not owner:
+    
+    owner = session.get(User, userToken.id) 
+    
+    if not owner or not owner.id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+ 
+    communityCreateDict =  communityCreate.model_dump()
+    communityCreateDict["owner_id"] = owner.id
 
+    newCommunity = Community.model_validate(communityCreateDict)
     newCommunity.members.append(owner)
     
     session.add(newCommunity)

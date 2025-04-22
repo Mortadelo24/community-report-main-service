@@ -7,7 +7,7 @@ from ..database import DBSessionDependency
 from ..models.user import User, UserToken, UserResponse
 from ..models.community import CommunityPublic, Community
 from ..security import encode_user_token
-from ..dependencies import user_token_dependency
+from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path
 
 router = APIRouter()
 
@@ -65,20 +65,46 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
 
 
 @router.get(
-        "/{user_id}/communities", 
+        "/me/communities/joined",
         response_model=list[CommunityPublic],
         status_code=status.HTTP_200_OK,
-        summary="Returns the communities of an user",
-        description="Makes a request to the data base for the communities of a specific user_id",
-        response_description="The communities of the given user_id"
+        summary="Returns the joined communities of the current user",
+        response_description="A list of communities",
 )
-def read_user_communities(user_id: Annotated[int, Path()] , userToken: user_token_dependency, session: DBSessionDependency):
-    if user_id != userToken.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can't read others communities")
-
-    user = session.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") 
+def read_current_user_communities_joined(currentUser: current_user_dependency):
+    return currentUser.communities_joined
 
 
-    return user.communities
+@router.get(
+        "/me/communities/owned",
+        response_model=list[CommunityPublic],
+        status_code=status.HTTP_200_OK,
+        summary="Return the communities owned by the current user",
+        response_description="A list of communities",
+)
+def read_current_user_communities_owned(currentUser: current_user_dependency):
+    return currentUser.owned_communities
+
+
+@router.get(
+        "/{user_id}/communities/joined", 
+        response_model=list[CommunityPublic],
+        status_code=status.HTTP_200_OK,
+        summary="Returns the joined communities of an user",
+        response_description="A list of communities",
+        dependencies=[Depends(get_same_user_id_path)]
+)
+def read_user_communities_joined(user: current_user_dependency):
+    # change the way this behaves 
+    return user.communities_joined
+
+@router.get(
+    "/{user_id}/communities/owned",
+    response_model=list[CommunityPublic],
+    status_code=status.HTTP_200_OK,
+    summary="Returns the communities owned by the user",
+    response_description="A list of communities",
+    dependencies=[Depends(get_same_user_id_path)]
+)
+def read_user_owned_communities(user: current_user_dependency):
+    return user.owned_communities
