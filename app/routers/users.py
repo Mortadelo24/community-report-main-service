@@ -7,9 +7,19 @@ from ..database import DBSessionDependency
 from ..models.user import User, UserToken, UserResponse
 from ..models.community import CommunityPublic, Community
 from ..security import encode_user_token
-from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path
+from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path, get_current_user, get_user_token
 
 router = APIRouter()
+
+@router.post(
+        "/token/validate",
+        response_model=None,
+        status_code=status.HTTP_202_ACCEPTED,
+        summary="Raise a http exception if the token is invalid",
+        dependencies=[Depends(get_user_token)]
+)
+def validate_token():
+    return
 
 @router.post(
         "/token", 
@@ -54,7 +64,7 @@ def create_token(token: TokenCreate, session: DBSessionDependency):
         status_code=status.HTTP_200_OK,
         summary="Returns the current user information",
         description="Uses the bearer token for indentifying the current user and return it",
-        response_description="The current user information"
+        response_description="The current user information",
 )
 def read_current_user(userToken: user_token_dependency, session: DBSessionDependency):
     user = session.get(User, userToken.id)
@@ -64,26 +74,24 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
     return UserResponse(**user.model_dump())
 
 
-@router.get(
-        "/me/communities/joined",
-        response_model=list[CommunityPublic],
-        status_code=status.HTTP_200_OK,
-        summary="Returns the joined communities of the current user",
-        response_description="A list of communities",
-)
-def read_current_user_communities_joined(currentUser: current_user_dependency):
-    return currentUser.communities_joined
 
 
 @router.get(
-        "/me/communities/owned",
-        response_model=list[CommunityPublic],
+        "/{user_id}",
+        response_model=UserResponse,
         status_code=status.HTTP_200_OK,
-        summary="Return the communities owned by the current user",
-        response_description="A list of communities",
+        summary="Returns the user that matches the id",
+        response_description="The user information",
 )
-def read_current_user_communities_owned(currentUser: current_user_dependency):
-    return currentUser.owned_communities
+def read_user(user_id: Annotated[int, Path()], session: DBSessionDependency):
+    user = session.get(User, user_id)
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find the user")
+
+    return user
+    
+
 
 
 @router.get(
@@ -94,8 +102,7 @@ def read_current_user_communities_owned(currentUser: current_user_dependency):
         response_description="A list of communities",
         dependencies=[Depends(get_same_user_id_path)]
 )
-def read_user_communities_joined(user: current_user_dependency):
-    # change the way this behaves 
+def read_user_communities_joined(user: current_user_dependency): 
     return user.communities_joined
 
 @router.get(
