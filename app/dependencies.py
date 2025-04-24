@@ -4,6 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from .security import security, decode_user_token
 from .models.user import UserToken, User
+from .models.community import Community
 from .database import DBSessionDependency
 
 def get_user_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
@@ -29,3 +30,14 @@ def get_same_user_id_path(user_id: Annotated[int, Path()], user: user_token_depe
     return user_id
 
 same_user_id_path = Annotated[int, Depends(get_same_user_id_path)]
+
+
+def get_community_from_path(community_id: Annotated[int, Path()],  session: DBSessionDependency):
+    community = session.get(Community, community_id)
+
+    if not community:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cannot found the community")
+
+    return community
+
+community_from_path_dependecy = Annotated[Community, Depends(get_community_from_path)]

@@ -3,7 +3,7 @@ from .links import UserCommunityLink
 from .user import User
 
 class CommunityBase(SQLModel):
-    name: str
+    name: str = Field(min_length=4, max_length=30)
 
 class CommunityCreate(CommunityBase):
     pass

@@ -4,7 +4,7 @@ from typing import Annotated
 from ..models.token import TokenCreate, TokenResponse
 from ..apis import firebase
 from ..database import DBSessionDependency
-from ..models.user import User, UserToken, UserResponse
+from ..models.user import User, UserToken, UserPublic
 from ..models.community import CommunityPublic, Community
 from ..security import encode_user_token
 from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path, get_current_user, get_user_token
@@ -60,7 +60,7 @@ def create_token(token: TokenCreate, session: DBSessionDependency):
 
 @router.get(
         "/me",
-        response_model=UserResponse,
+        response_model=UserPublic,
         status_code=status.HTTP_200_OK,
         summary="Returns the current user information",
         description="Uses the bearer token for indentifying the current user and return it",
@@ -71,14 +71,14 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The token is not registered")
 
-    return UserResponse(**user.model_dump())
+    return UserPublic(**user.model_dump())
 
 
 
 
 @router.get(
         "/{user_id}",
-        response_model=UserResponse,
+        response_model=UserPublic,
         status_code=status.HTTP_200_OK,
         summary="Returns the user that matches the id",
         response_description="The user information",

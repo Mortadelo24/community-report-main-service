@@ -4,8 +4,8 @@ from typing import Annotated
 
 from ..database import DBSessionDependency
 from ..models.community import CommunityPublic, CommunityCreate, Community
-from ..models.user import User
-from ..dependencies import user_token_dependency
+from ..models.user import User, UserPublic
+from ..dependencies import user_token_dependency, community_from_path_dependecy
 
 router = APIRouter()
 
@@ -48,13 +48,19 @@ def create_community(communityCreate: CommunityCreate, userToken: user_token_dep
     description="...",
     response_description="The community requested"
 )
-def read_community(community_id: Annotated[int, Path()],  session: DBSessionDependency):
-    community = session.get(Community, community_id)
-
-    if not community:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Can not found the community")
-    
+def read_community(community: community_from_path_dependecy):
     return community
+
+@router.get(
+        "/{community_id}/members",
+        response_model=list[UserPublic],
+        status_code=status.HTTP_200_OK,
+        summary="Returns the community's members",
+        response_description="A list of Users", 
+)
+def read_communities(community: community_from_path_dependecy):
+     
+    return community.members
 
 @router.post(
     "{community_id}/join",

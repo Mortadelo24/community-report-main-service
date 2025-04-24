@@ -14,11 +14,11 @@ class UserFirebase(UserBase):
     id: str 
 
 
-class UserResponse(UserBase):
+class UserPublic(UserBase):
     id: int
 
 
-class UserToken(UserResponse):
+class UserToken(UserPublic):
     pass
 
 class User(UserBase, table=True):
