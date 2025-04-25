@@ -5,7 +5,7 @@ from typing import Annotated
 from ..database import DBSessionDependency
 from ..models.community import CommunityPublic, CommunityCreate, Community
 from ..models.user import User, UserPublic
-from ..dependencies import user_token_dependency, community_from_path_dependecy
+from ..dependencies import user_token_dependency, community_from_path_dependecy, current_user_dependency
 
 router = APIRouter()
 
@@ -17,17 +17,13 @@ router = APIRouter()
     description="Creates a community with the information provided",
     response_description="The community that was created"
 )
-def create_community(communityCreate: CommunityCreate, userToken: user_token_dependency, session: DBSessionDependency):
-    
-    owner = session.get(User, userToken.id) 
-    
-    if not owner or not owner.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
- 
+def create_community(communityCreate: CommunityCreate, owner: current_user_dependency, session: DBSessionDependency):
     communityCreateDict =  communityCreate.model_dump()
     communityCreateDict["owner_id"] = owner.id
 
+    
     newCommunity = Community.model_validate(communityCreateDict)
+    
     newCommunity.members.append(owner)
     
     session.add(newCommunity)
@@ -63,7 +59,7 @@ def read_communities(community: community_from_path_dependecy):
     return community.members
 
 @router.post(
-    "{community_id}/join",
+    "/{community_id}/join",
     response_model=None,
     status_code=status.HTTP_201_CREATED,
     summary="add a user to the community",

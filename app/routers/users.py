@@ -8,6 +8,7 @@ from ..models.user import User, UserToken, UserPublic
 from ..models.community import CommunityPublic, Community
 from ..security import encode_user_token
 from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path, get_current_user, get_user_token
+import uuid
 
 router = APIRouter()
 
@@ -33,7 +34,6 @@ def create_token(token: TokenCreate, session: DBSessionDependency):
     userFirebase = firebase.get_user(token.access_token)
     if not userFirebase:
         raise HTTPException(status_code=400, detail="Invalid access_token")  
-    print(userFirebase.id)
 
 # look for the user with the firebase id and if there is none create it
     statement = select(User).where(col(User.firebase_id) == userFirebase.id)
@@ -50,9 +50,8 @@ def create_token(token: TokenCreate, session: DBSessionDependency):
         session.refresh(newUser)
         user = newUser
  
-
     tokenResponse = TokenResponse(
-        access_token=encode_user_token(UserToken(**user.model_dump())),
+        access_token=encode_user_token(UserToken.model_validate(user)),
         token_type="Bearer"
     )
     
@@ -71,7 +70,7 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The token is not registered")
 
-    return UserPublic(**user.model_dump())
+    return user
 
 
 
@@ -83,7 +82,7 @@ def read_current_user(userToken: user_token_dependency, session: DBSessionDepend
         summary="Returns the user that matches the id",
         response_description="The user information",
 )
-def read_user(user_id: Annotated[int, Path()], session: DBSessionDependency):
+def read_user(user_id: Annotated[uuid.UUID, Path()], session: DBSessionDependency):
     user = session.get(User, user_id)
 
     if not user:
