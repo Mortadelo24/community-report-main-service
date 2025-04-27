@@ -7,6 +7,7 @@ import uuid
 
 if TYPE_CHECKING:
     from .community import Community
+    from .report import Report
 
 class UserBase(SQLModel):
     display_name: str | None = None
@@ -30,3 +31,4 @@ class User(UserBase, table=True):
     firebase_id: str | None = Field(default=None, index=True, unique=True)
     communities_joined: list["Community"] = Relationship(back_populates="members", link_model=UserCommunityLink)
     owned_communities: list["Community"] = Relationship(back_populates="owner")
+    reports: list["Report"] = Relationship(back_populates="user")

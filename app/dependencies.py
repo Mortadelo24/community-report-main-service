@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, HTTPException, status, Path
+from fastapi import Depends, HTTPException, status, Path, Query
 from fastapi.security import HTTPAuthorizationCredentials
 import uuid
 
@@ -33,8 +33,9 @@ def get_same_user_id_path(user_id: Annotated[uuid.UUID, Path()], user: user_toke
 
 same_user_id_path = Annotated[int, Depends(get_same_user_id_path)]
 
+# community dependencies 
 
-def get_community_from_path(community_id: Annotated[uuid.UUID, Path()],  session: DBSessionDependency):
+def get_community(community_id: uuid.UUID, session: DBSessionDependency):
     community = session.get(Community, community_id)
 
     if not community:
@@ -42,4 +43,13 @@ def get_community_from_path(community_id: Annotated[uuid.UUID, Path()],  session
 
     return community
 
+
+def get_community_from_path(community_id: Annotated[uuid.UUID, Path()],  session: DBSessionDependency):
+    return get_community(community_id, session)
+
 community_from_path_dependecy = Annotated[Community, Depends(get_community_from_path)]
+
+def get_community_from_quary(community_id: Annotated[uuid.UUID, Query()], session: DBSessionDependency):
+   return get_community(community_id, session) 
+
+community_from_quary_dependency = Annotated[Community, Depends(get_community_from_quary)]

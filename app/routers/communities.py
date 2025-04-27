@@ -6,6 +6,7 @@ from ..database import DBSessionDependency
 from ..models.community import CommunityPublic, CommunityCreate, Community
 from ..models.user import User, UserPublic
 from ..dependencies import user_token_dependency, community_from_path_dependecy, current_user_dependency
+from ..models.report import Report
 
 router = APIRouter()
 
@@ -58,12 +59,4 @@ def read_communities(community: community_from_path_dependecy):
      
     return community.members
 
-@router.post(
-    "/{community_id}/join",
-    response_model=None,
-    status_code=status.HTTP_201_CREATED,
-    summary="add a user to the community",
-    response_description="The community the user joined"
-) 
-def add_member_community():
-    return None
+
