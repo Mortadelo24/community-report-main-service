@@ -7,7 +7,7 @@ from ..database import DBSessionDependency
 from ..models.user import User, UserToken, UserPublic
 from ..models.community import CommunityPublic, Community
 from ..security import encode_user_token
-from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path, get_current_user, get_user_token
+from ..dependencies import user_token_dependency, current_user_dependency, get_same_user_id_path, get_current_user
 import uuid
 
 router = APIRouter()
@@ -17,7 +17,7 @@ router = APIRouter()
         response_model=None,
         status_code=status.HTTP_202_ACCEPTED,
         summary="Raise a http exception if the token is invalid",
-        dependencies=[Depends(get_user_token)]
+        dependencies=[Depends(get_current_user)]
 )
 def validate_token():
     return

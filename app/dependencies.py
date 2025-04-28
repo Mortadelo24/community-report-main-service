@@ -7,6 +7,7 @@ from .security import security, decode_user_token
 from .models.user import UserToken, User
 from .models.community import Community
 from .database import DBSessionDependency
+from .subDependencies import get_community
 
 def get_user_token(credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
     try:
@@ -35,14 +36,6 @@ same_user_id_path = Annotated[int, Depends(get_same_user_id_path)]
 
 # community dependencies 
 
-def get_community(community_id: uuid.UUID, session: DBSessionDependency):
-    community = session.get(Community, community_id)
-
-    if not community:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cannot found the community")
-
-    return community
-
 
 def get_community_from_path(community_id: Annotated[uuid.UUID, Path()],  session: DBSessionDependency):
     return get_community(community_id, session)
@@ -53,3 +46,5 @@ def get_community_from_quary(community_id: Annotated[uuid.UUID, Query()], sessio
    return get_community(community_id, session) 
 
 community_from_quary_dependency = Annotated[Community, Depends(get_community_from_quary)]
+
+

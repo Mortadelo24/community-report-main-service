@@ -8,6 +8,7 @@ import uuid
 if TYPE_CHECKING:
     from .community import Community
     from .report import Report
+    from .invitation import Invitation
 
 class UserBase(SQLModel):
     display_name: str | None = None
@@ -32,3 +33,5 @@ class User(UserBase, table=True):
     communities_joined: list["Community"] = Relationship(back_populates="members", link_model=UserCommunityLink)
     owned_communities: list["Community"] = Relationship(back_populates="owner")
     reports: list["Report"] = Relationship(back_populates="user")
+
+    invitations: list["Invitation"] = Relationship(back_populates="user")

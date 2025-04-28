@@ -16,6 +16,7 @@ class CommunityCreate(CommunityBase):
 
 class CommunityPublic(CommunityBase):
     id: UUID
+    owner_id: UUID
 
 class Community(CommunityBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
