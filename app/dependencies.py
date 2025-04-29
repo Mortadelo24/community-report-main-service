@@ -20,6 +20,7 @@ user_token_dependency =  Annotated[UserToken, Depends(get_user_token)]
 
 def get_current_user(userToken: user_token_dependency, session: DBSessionDependency):
     user = session.get(User, userToken.id)
+
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") 
 
@@ -28,6 +29,7 @@ def get_current_user(userToken: user_token_dependency, session: DBSessionDepende
 current_user_dependency = Annotated[User, Depends(get_current_user)]
  
 def get_same_user_id_path(user_id: Annotated[uuid.UUID, Path()], user: user_token_dependency):
+    
     if user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Can't read others communities")
     return user_id

@@ -3,7 +3,7 @@ from ..models.report import ReportPublic, ReportCreate, Report
 from typing import Annotated
 from uuid import UUID
 
-from ..dependencies import community_from_quary_dependency, current_user_dependency
+from ..dependencies import community_from_quary_dependency, current_user_dependency, user_token_dependency
 
 from ..database import DBSessionDependency
 
@@ -40,7 +40,10 @@ def create_report(user: current_user_dependency , reportCreate: ReportCreate , s
     response_model=list[ReportPublic],
     response_description="A list of reports"
 )
-def read_reports(community:community_from_quary_dependency):
+def read_reports(community:community_from_quary_dependency, user: user_token_dependency):
+    if community.owner_id != user.id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not the owner")
+    
     return community.reports
 
 
