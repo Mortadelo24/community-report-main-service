@@ -4,11 +4,12 @@ from ..models.user import UserFirebase
 
 initialized: bool = False
 
+
 def initialize():
     global initialized
-    if initialized == True:
+    if initialized:
         return
-    
+
     try:
         cred = credentials.Certificate("./serviceAccountKey.json")
         firebase_admin.initialize_app(cred)
@@ -23,9 +24,9 @@ def get_user(token: str) -> UserFirebase | None:
         tokenInfo = auth.verify_id_token(token)
     except Exception:
         return None
-    
+
     return UserFirebase(
         display_name=tokenInfo["name"],
         email=tokenInfo["email"],
-        id= tokenInfo["uid"]
+        id=tokenInfo["uid"]
     )
