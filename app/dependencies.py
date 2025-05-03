@@ -4,7 +4,7 @@ import uuid
 from fastapi import Depends, HTTPException, Path, Query, status
 from fastapi.security import HTTPAuthorizationCredentials
 
-from .database import DBSessionDependency
+from .database.config import DBSessionDependency
 from .models.community import Community
 from .models.user import User, UserToken
 from .security import decode_user_token, security

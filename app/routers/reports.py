@@ -1,13 +1,11 @@
 from fastapi import APIRouter, status, HTTPException
 from ..models.report import ReportPublic, ReportCreate, Report
-from typing import Annotated
-from uuid import UUID
-
 from ..dependencies import community_from_quary_dependency, current_user_dependency, user_token_dependency
 
-from ..database import DBSessionDependency
+from ..database.config import DBSessionDependency
 
 router = APIRouter()
+
 
 @router.post(
     "/",
@@ -16,11 +14,11 @@ router = APIRouter()
     response_model=ReportPublic,
     response_description="The created report"
 )
-def create_report(user: current_user_dependency , reportCreate: ReportCreate , session: DBSessionDependency):
+def create_report(user: current_user_dependency, reportCreate: ReportCreate, session: DBSessionDependency):
     newReport = Report(
         user_id=user.id,
         community_id=reportCreate.community_id,
-        complaint=reportCreate.complaint,
+        complaint_id=reportCreate.complaint_id
     )
 
     session.add(newReport)
@@ -33,6 +31,7 @@ def create_report(user: current_user_dependency , reportCreate: ReportCreate , s
 
     return newReport
 
+
 @router.get(
     "/",
     status_code=status.HTTP_200_OK,
@@ -40,10 +39,10 @@ def create_report(user: current_user_dependency , reportCreate: ReportCreate , s
     response_model=list[ReportPublic],
     response_description="A list of reports"
 )
-def read_reports(community:community_from_quary_dependency, user: user_token_dependency):
+def read_reports(community: community_from_quary_dependency, user: user_token_dependency):
     if community.owner_id != user.id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not the owner")
-    
+
     return community.reports
 
 
@@ -54,5 +53,6 @@ def read_reports(community:community_from_quary_dependency, user: user_token_dep
     response_description="A report"
 )
 def read_report():
-    #todo return the report id with new dependecy
+    # todo return the report id with new dependecy
     return
+

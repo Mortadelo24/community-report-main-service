@@ -1,7 +1,8 @@
 from uuid import UUID
 from fastapi import HTTPException, status
-from .database import DBSessionDependency
+from .database.config import DBSessionDependency
 from .models.community import Community
+
 
 def get_community(community_id: UUID, session: DBSessionDependency):
     community = session.get(Community, community_id)
@@ -10,3 +11,4 @@ def get_community(community_id: UUID, session: DBSessionDependency):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cannot found the community")
 
     return community
+
