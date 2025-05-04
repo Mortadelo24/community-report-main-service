@@ -10,6 +10,11 @@ class ComplaintBase(SQLModel):
     pass
 
 
+class ComplaintPublic(ComplaintBase):
+    id: UUID
+    text: str
+
+
 class Complaint(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     reports: list["Report"] = Relationship(back_populates="complaint")
