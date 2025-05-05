@@ -21,6 +21,12 @@ class ReportPublic(ReportBase):
     created_at: datetime
 
 
+class ReportChar(SQLModel):
+    id: UUID
+    text: str
+    count: int
+
+
 class Report(ReportBase, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime | None = Field(default_factory=datetime.now)
