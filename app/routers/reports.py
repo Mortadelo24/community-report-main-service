@@ -1,8 +1,6 @@
 from fastapi import APIRouter, status, HTTPException
-from ..models.report import ReportPublic, ReportCreate, Report, ReportChar
-from ..models.complaint import Complaint
+from ..models.report import ReportPublic, ReportCreate, Report
 from ..dependencies import community_from_quary_dependency, current_user_dependency, user_token_dependency
-from sqlmodel import select, and_
 from ..database.config import DBSessionDependency
 
 router = APIRouter()
@@ -45,30 +43,5 @@ def read_reports(community: community_from_quary_dependency, user: user_token_de
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not the owner")
 
     return community.reports
-
-
-@router.get(
-    "/datachars",
-    summary="A colection of data for a data char",
-    response_model=list[ReportChar],
-    response_description="A list of reports"
-)
-def read_datachar(session: DBSessionDependency, community: community_from_quary_dependency, user: user_token_dependency):
-    if community.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not the owner")
-
-    data = []
-    complaints = session.exec(select(Complaint)).all()
-
-    for complaint in complaints:
-        reports = session.exec(select(Report).where(and_(Report.complaint_id == complaint.id, Report.community_id == community.id))).all()
-        data.append(ReportChar(
-            id=complaint.id,
-            text=complaint.text,
-            count=len(reports)
-        ))
-
-    return data
-
 
 
