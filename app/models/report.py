@@ -4,6 +4,8 @@ from .community import Community
 from .complaint import Complaint
 from uuid import UUID, uuid4
 from datetime import datetime
+from .image import Image
+from .links import ReportImageLink
 
 
 class ReportBase(SQLModel):
@@ -27,6 +29,8 @@ class Report(ReportBase, table=True):
     user: User = Relationship(back_populates="reports")
     complaint: Complaint = Relationship(back_populates="reports")
     community: Community = Relationship(back_populates="reports")
+
+    images: list[Image] = Relationship(link_model=ReportImageLink)
 
     user_id: UUID = Field(foreign_key="user.id")
     complaint_id: UUID = Field(foreign_key="complaint.id")
