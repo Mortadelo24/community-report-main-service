@@ -17,5 +17,5 @@ pip install -r requirements.txt
 # Secret files
 
 ### serviceAccountKey.json
-This are the credential for the firebase-admin library.
+This is the credential for the firebase-admin library.
 
