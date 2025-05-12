@@ -6,7 +6,7 @@
 2. A virtual enviroment of python
 
 # FRONTEND
-[https://github.com/Mortadelo24/community-report-web-client](Repository)
+[Repository](https://github.com/Mortadelo24/community-report-web-client)
 
 # Installation 
 
