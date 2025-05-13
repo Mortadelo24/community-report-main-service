@@ -1,5 +1,6 @@
 from typing import Annotated
 import uuid
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Path, Query, status
 from fastapi.security import HTTPAuthorizationCredentials
@@ -7,6 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from .database.config import DBSessionDependency
 from .models.community import Community
 from .models.user import User, UserToken
+from .models.report import Report
 from .security import decode_user_token, security
 from .subDependencies import get_community
 
@@ -58,5 +60,15 @@ def get_community_from_quary(community_id: Annotated[uuid.UUID, Query()], sessio
 
 
 community_from_quary_dependency = Annotated[Community, Depends(get_community_from_quary)]
+
+# report dependencies
+
+
+def get_report_from_query(report_id: Annotated[UUID, Query()], session: DBSessionDependency):
+    report = session.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find the report")
+
+    return report
 
 

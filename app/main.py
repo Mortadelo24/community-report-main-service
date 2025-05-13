@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from .database.config import create_db_and_tables
 from contextlib import asynccontextmanager
-from .routers import users, communities, reports, invitations, complaints, statistics
+from .routers import users, communities, reports, invitations, complaints, statistics, images
 from .apis import firebase
 from .dependencies import get_user_token
 
@@ -23,6 +23,13 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
+app.include_router(
+    images.router,
+    prefix="/images",
+    tags=["images"],
+    dependencies=[Depends(get_user_token)]
+)
+
 app.include_router(
     complaints.router,
     prefix="/complaints",
@@ -45,13 +52,13 @@ app.include_router(
 app.include_router(
     reports.router,
     prefix="/reports",
-    tags=["Reports"],
+    tags=["reports"],
     dependencies=[Depends(get_user_token)]
 )
 app.include_router(
     invitations.router,
     prefix="/invitations",
-    tags=["Invitations"],
+    tags=["invitations"],
     dependencies=[Depends(get_user_token)]
 )
 

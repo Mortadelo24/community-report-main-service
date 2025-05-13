@@ -1,18 +1,10 @@
-from fastapi import APIRouter, Path, status, HTTPException, UploadFile, Response
+from fastapi import APIRouter, status, HTTPException
 from ..models.report import ReportPublic, ReportCreate, Report
-from ..models.image import Image
 from ..dependencies import community_from_quary_dependency, current_user_dependency, user_token_dependency
 from ..database.config import DBSessionDependency
-from typing import Annotated
 from uuid import UUID
 
 router = APIRouter()
-
-ALLOWED_IMAGE_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-}
 
 
 @router.post(
@@ -40,30 +32,18 @@ def create_report(user: current_user_dependency, reportCreate: ReportCreate, ses
     return newReport
 
 
-@router.post(
-    "/{report_id}/evidence",
-    status_code=status.HTTP_201_CREATED,
-    summary="Save an image",
+@router.get(
+    "/{report_id}",
+    summary="Returns information about a report",
+    response_description="A report",
+    response_model=ReportPublic
 )
-async def create_evidence_image(report_id: Annotated[UUID, Path()], file: UploadFile, session: DBSessionDependency):
+def read_report(report_id: UUID, session: DBSessionDependency):
     report = session.get(Report, report_id)
     if not report:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find the report")
-    if file.content_type not in ALLOWED_IMAGE_TYPES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Wrong image type")
 
-    content = await file.read()
-    new_image = Image(data=content, content_type=file.content_type)
-    session.add(new_image)
-    report.images.append(new_image)
-
-    try:
-        session.commit()
-        session.refresh(new_image)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="could not create the image")
-
-    return Response(content=new_image.data, media_type=new_image.content_type)
+    return report
 
 
 @router.get(
