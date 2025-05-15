@@ -19,6 +19,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+origins = ["http://localhost:5173", "https://integrador-community.netlify.app"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
 app.include_router(
     users.router,
     prefix="/users",
@@ -63,14 +72,6 @@ app.include_router(
     dependencies=[Depends(get_user_token)]
 )
 
-origins = ["http://localhost:5173", "https://integrador-community.netlify.app"]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
 
 
 @app.get("/")
