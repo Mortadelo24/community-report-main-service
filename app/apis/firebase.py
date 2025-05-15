@@ -1,6 +1,9 @@
 import firebase_admin
 from firebase_admin import credentials, auth
 from ..models.user import UserFirebase
+import os
+import dotenv
+import json
 
 initialized: bool = False
 
@@ -10,8 +13,10 @@ def initialize():
     if initialized:
         return
 
+    dotenv.load_dotenv()
     try:
-        cred = credentials.Certificate("./serviceAccountKey.json")
+        service_credentials = json.loads(os.environ.get("GOOGLE_SERVICE_ACCOUNT"))
+        cred = credentials.Certificate(service_credentials)
         firebase_admin.initialize_app(cred)
         print("Firebase was initialized")
         initialized = True
