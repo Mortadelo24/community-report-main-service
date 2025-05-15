@@ -84,4 +84,4 @@ def read_health():
 
 
 def start_service():
-    uvicorn.run('app.main:app', host='0.0.0.0', port=8000)
+    uvicorn.run('app.main:app', host='0.0.0.0', port=8000, proxy_headers=True)
