@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from .routers import users, communities, reports, invitations, complaints, statistics, images
 from .apis import firebase
 from .dependencies import get_user_token
-
+import uvicorn
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -80,3 +80,7 @@ def read_root():
 @app.get("/health")
 def read_health():
     return
+
+
+def start_service():
+    uvicorn.run('app.main:app', host='0.0.0.0', port=8000)
