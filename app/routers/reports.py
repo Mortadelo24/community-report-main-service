@@ -1,8 +1,9 @@
 from fastapi import APIRouter, status, HTTPException
 from ..models.report import ReportPublic, ReportCreate, Report
-from ..dependencies import community_from_quary_dependency, current_user_dependency, user_token_dependency
+from ..dependencies import community_from_quary_dependency, current_user_dependency, user_token_dependency, filter_query_dependency
 from ..database.config import DBSessionDependency
 from uuid import UUID
+from sqlmodel import select
 
 router = APIRouter()
 
@@ -53,10 +54,13 @@ def read_report(report_id: UUID, session: DBSessionDependency):
     response_model=list[ReportPublic],
     response_description="A list of reports"
 )
-def read_reports(community: community_from_quary_dependency, user: user_token_dependency):
+def read_reports(community: community_from_quary_dependency, filter_query: filter_query_dependency, user: user_token_dependency, session: DBSessionDependency):
     if community.owner_id != user.id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="You are not the owner")
 
-    return community.reports
+    statement = select(Report).where(Report.community_id == community.id).offset(filter_query.offset).limit(filter_query.limit)
+    reports = session.exec(statement).all()
+
+    return reports
 
 

@@ -9,6 +9,7 @@ from .database.config import DBSessionDependency
 from .models.community import Community
 from .models.user import User, UserToken
 from .models.report import Report
+from .models.pagination import Pagination
 from .security import decode_user_token, security
 from .subDependencies import get_community
 
@@ -70,5 +71,14 @@ def get_report_from_query(report_id: Annotated[UUID, Query()], session: DBSessio
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find the report")
 
     return report
+
+# pagination dependecies
+
+
+def get_pagination(filter_query: Annotated[Pagination, Query()]):
+    return filter_query
+
+
+filter_query_dependency = Annotated[Pagination, Depends(get_pagination)]
 
 
