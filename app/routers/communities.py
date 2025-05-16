@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.post(
-    "",
+    "/",
     response_model=CommunityPublic,
     status_code=status.HTTP_201_CREATED,
     summary="Creates a community",
